@@ -8,7 +8,6 @@ import com.itskool.exceptions.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -57,10 +56,8 @@ public class ProductCompositeIntegration {
         return this.webClient.get()
                 .uri(url)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError,
-                        error -> Mono.error(new NotFoundException("No recommendations found for product with id " + productId)))
                 .bodyToFlux(RecommendationDto.class)
-                .switchIfEmpty(Flux.empty());
+                .onErrorResume(throwable -> Flux.empty());
     }
 
     public Flux<ReviewDto> getReviews(Long productId) {
@@ -70,10 +67,8 @@ public class ProductCompositeIntegration {
         return this.webClient.get()
                 .uri(url)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError,
-                        error -> Mono.error(new NotFoundException("No reviews found for product with id " + productId)))
                 .bodyToFlux(ReviewDto.class)
-                .switchIfEmpty(Flux.empty());
+                .onErrorResume(throwable -> Flux.empty());
     }
 
     public Mono<ProductDto> createProduct(ProductDto productDto) {
