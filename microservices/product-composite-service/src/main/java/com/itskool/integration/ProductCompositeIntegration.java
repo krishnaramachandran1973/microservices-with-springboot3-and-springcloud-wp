@@ -8,7 +8,6 @@ import com.itskool.exceptions.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
@@ -45,7 +44,7 @@ public class ProductCompositeIntegration {
                 .uri(url)
                 .retrieve()
                 .onStatus(HttpStatus.NOT_FOUND::equals, error -> Mono.error(new NotFoundException("Product not found for id " + productId)))
-                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals,error -> Mono.error(new InvalidInputException(
+                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals, error -> Mono.error(new InvalidInputException(
                         "Product not found for id " + productId)))
                 .bodyToMono(ProductDto.class);
     }
@@ -57,10 +56,8 @@ public class ProductCompositeIntegration {
         return this.webClient.get()
                 .uri(url)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError,
-                        error -> Mono.error(new NotFoundException("No recommendations found for product with id " + productId)))
                 .bodyToFlux(RecommendationDto.class)
-                .switchIfEmpty(Flux.empty());
+                .onErrorResume(ex -> Flux.empty());
     }
 
     public Flux<ReviewDto> getReviews(Long productId) {
@@ -70,10 +67,8 @@ public class ProductCompositeIntegration {
         return this.webClient.get()
                 .uri(url)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError,
-                        error -> Mono.error(new NotFoundException("No reviews found for product with id " + productId)))
                 .bodyToFlux(ReviewDto.class)
-                .switchIfEmpty(Flux.empty());
+                .onErrorResume(ex -> Flux.empty());
     }
 
     public Mono<ProductDto> createProduct(ProductDto productDto) {
@@ -81,7 +76,7 @@ public class ProductCompositeIntegration {
                 .uri(productServiceUrl)
                 .bodyValue(productDto)
                 .retrieve()
-                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals,error -> Mono.error(new InvalidInputException(
+                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals, error -> Mono.error(new InvalidInputException(
                         "Couldn't create Product with id" + productDto.getProductId())))
                 .bodyToMono(ProductDto.class);
     }
@@ -91,7 +86,7 @@ public class ProductCompositeIntegration {
                 .uri(recommendationServiceUrl)
                 .bodyValue(recommendationDto)
                 .retrieve()
-                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals,error -> Mono.error(new InvalidInputException(
+                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals, error -> Mono.error(new InvalidInputException(
                         "Couldn't create Recommendation for productId" + recommendationDto.getProductId())))
                 .bodyToMono(RecommendationDto.class);
     }
@@ -101,16 +96,17 @@ public class ProductCompositeIntegration {
                 .uri(reviewServiceUrl)
                 .bodyValue(reviewDto)
                 .retrieve()
-                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals,error -> Mono.error(new InvalidInputException(
+                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals, error -> Mono.error(new InvalidInputException(
                         "Couldn't create Review for productId" + reviewDto.getProductId())))
                 .bodyToMono(ReviewDto.class);
     }
 
     public Mono<Void> deleteProduct(Long productId) {
         String url = productServiceUrl + "/" + productId;
-        return webClient.delete().uri(url)
+        return webClient.delete()
+                .uri(url)
                 .retrieve()
-                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals,error -> Mono.error(new InvalidInputException(
+                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals, error -> Mono.error(new InvalidInputException(
                         "Couldn't delete Product with productId" + productId)))
                 .bodyToMono(Void.class);
 
@@ -118,18 +114,20 @@ public class ProductCompositeIntegration {
 
     public Mono<Void> deleteRecommendations(Long productId) {
         String url = recommendationServiceUrl + "/" + productId;
-        return webClient.delete().uri(url)
+        return webClient.delete()
+                .uri(url)
                 .retrieve()
-                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals,error -> Mono.error(new InvalidInputException(
+                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals, error -> Mono.error(new InvalidInputException(
                         "Couldn't delete Recommendations for Product with productId" + productId)))
                 .bodyToMono(Void.class);
     }
 
     public Mono<Void> deleteReviews(Long productId) {
         String url = reviewServiceUrl + "/" + productId;
-        return webClient.delete().uri(url)
+        return webClient.delete()
+                .uri(url)
                 .retrieve()
-                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals,error -> Mono.error(new InvalidInputException(
+                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals, error -> Mono.error(new InvalidInputException(
                         "Couldn't delete Reviews for Product with productId" + productId)))
                 .bodyToMono(Void.class);
     }
