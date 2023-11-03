@@ -1,0 +1,80 @@
+version: '3.8'
+services:
+  product:
+    build: microservices/product-service
+    environment:
+      - spring.profiles.active=docker
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  recommendation:
+    build: microservices/recommendation-service
+    environment:
+      - spring.profiles.active=docker
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    depends_on:
+      mongodb:
+        condition: service_healthy
+
+  review:
+    build: microservices/review-service
+    environment:
+      - spring.profiles.active=docker
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  product-composite:
+    build: microservices/product-composite-service
+    ports:
+      - "8080:8080"
+    environment:
+      - spring.profiles.active=docker
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+
+  mongodb:
+    image: mongo:7.0.2
+    ports:
+      - "27017:27017"
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 5s
+      timeout: 2s
+      retries: 60
+
+  mysql:
+    image: mysql:8.0.35
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=review-db
+      - MYSQL_PASSWORD=root
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    healthcheck:
+      test: "/usr/bin/mysql --user=root --password=root --execute \"SHOW DATABASES;\""
+      interval: 5s
+      timeout: 2s
+      retries: 60
