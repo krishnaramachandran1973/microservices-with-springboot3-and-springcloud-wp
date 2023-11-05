@@ -4,7 +4,10 @@ import com.itskool.dto.ProductDto;
 import com.itskool.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -17,15 +20,5 @@ public class ProductController {
     @GetMapping("/{productId}")
     public Mono<ProductDto> getProduct(@PathVariable Long productId) {
         return productService.getProductById(productId);
-    }
-
-    @PostMapping
-    public Mono<ProductDto> createProduct(@RequestBody ProductDto productDto){
-        return productService.createProduct(productDto);
-    }
-
-    @DeleteMapping("/{productId}")
-    public Mono<Void> deleteProduct(@PathVariable Long productId){
-        return productService.deleteProduct(productId);
     }
 }

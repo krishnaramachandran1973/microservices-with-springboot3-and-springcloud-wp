@@ -3,7 +3,21 @@ services:
   product:
     build: microservices/product-service
     environment:
-      - spring.profiles.active=docker
+      - spring.profiles.active=docker,streaming_partitioned,streaming_instance_0
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  product-1:
+    build: microservices/product-service
+    environment:
+      - spring.profiles.active=docker,streaming_partitioned,streaming_instance_1
     deploy:
       resources:
         reservations:
@@ -17,7 +31,21 @@ services:
   recommendation:
     build: microservices/recommendation-service
     environment:
-      - spring.profiles.active=docker
+      - spring.profiles.active=docker,streaming_partitioned,streaming_instance_0
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  recommendation-1:
+    build: microservices/recommendation-service
+    environment:
+      - spring.profiles.active=docker,streaming_partitioned,streaming_instance_1
     deploy:
       resources:
         reservations:
@@ -31,7 +59,21 @@ services:
   review:
     build: microservices/review-service
     environment:
-      - spring.profiles.active=docker
+      - spring.profiles.active=docker,streaming_partitioned,streaming_instance_0
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  review-1:
+    build: microservices/review-service
+    environment:
+      - spring.profiles.active=docker,streaming_partitioned,streaming_instance_1
     deploy:
       resources:
         reservations:
@@ -47,7 +89,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - spring.profiles.active=docker
+      - spring.profiles.active=docker,streaming_partitioned
     deploy:
       resources:
         reservations:

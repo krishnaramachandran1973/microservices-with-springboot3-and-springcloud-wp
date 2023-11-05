@@ -24,13 +24,13 @@ public class RecommendationService {
     private final ServiceUtil serviceUtil;
 
     public Mono<RecommendationDto> createRecommendation(RecommendationDto recommendationDto) {
-        if (recommendationDto.getProductId()<1){
+        if (recommendationDto.getProductId() < 1) {
             throw new InvalidInputException("Invalid productId: " + recommendationDto.getProductId());
         }
         Recommendation recommendationToCreate = recommendationMapper.dtoToEntity(recommendationDto);
         return recommendationRepository.save(recommendationToCreate)
                 .log(log.getName(), FINE)
-                .onErrorMap(DuplicateKeyException.class,ex-> new InvalidInputException("Duplicate key, Product Id: " + recommendationDto.getProductId() + ", Recommendation Id:" + recommendationDto.getRecommendationId()))
+                .onErrorMap(DuplicateKeyException.class, ex -> new InvalidInputException("Duplicate key, Product Id: " + recommendationDto.getProductId() + ", Recommendation Id:" + recommendationDto.getRecommendationId()))
                 .map(recommendationMapper::entityToDto);
     }
 

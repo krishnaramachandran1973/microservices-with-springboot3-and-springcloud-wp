@@ -15,6 +15,8 @@ public class ProductCompositeProperties {
     private ProductService productService = new ProductService();
     private RecommendationService recommendationService = new RecommendationService();
     private ReviewService reviewService = new ReviewService();
+    private Integer threadPoolSize;
+    private Integer taskQueueSize;
 
     @Getter
     @Setter

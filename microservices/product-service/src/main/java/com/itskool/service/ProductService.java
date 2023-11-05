@@ -28,7 +28,7 @@ public class ProductService {
             throw new InvalidInputException("Invalid productId: " + productId);
         }
         log.info("Will get product info for id={}", productId);
-        
+
         return productRepository.findProductByProductId(productId)
                 .switchIfEmpty(Mono.error(new NotFoundException("No product found for productId: " + productId)))
                 .log(log.getName(), FINE)
@@ -37,13 +37,13 @@ public class ProductService {
     }
 
     public Mono<ProductDto> createProduct(ProductDto productDto) {
-        if (productDto.getProductId() < 1){
+        if (productDto.getProductId() < 1) {
             throw new InvalidInputException("Invalid productId: " + productDto.getProductId());
         }
         Product productToCreate = productMapper.dtoToEntity(productDto);
         return productRepository.save(productToCreate)
                 .log(log.getName(), FINE)
-                .onErrorMap(DuplicateKeyException.class,e -> new InvalidInputException("Duplicate key, Product Id: " + productDto.getProductId()))
+                .onErrorMap(DuplicateKeyException.class, e -> new InvalidInputException("Duplicate key, Product Id: " + productDto.getProductId()))
                 .map(productMapper::entityToDto);
 
     }

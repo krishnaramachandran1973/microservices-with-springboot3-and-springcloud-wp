@@ -1,0 +1,156 @@
+version: '3.8'
+services:
+  product:
+    build: microservices/product-service
+    environment:
+      - spring.profiles.active=docker,streaming_partitioned,streaming_instance_0,kafka
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  product-1:
+    build: microservices/product-service
+    environment:
+      - spring.profiles.active=docker,streaming_partitioned,streaming_instance_1,kafka
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  recommendation:
+    build: microservices/recommendation-service
+    environment:
+      - spring.profiles.active=docker,streaming_partitioned,streaming_instance_0,kafka
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  recommendation-1:
+    build: microservices/recommendation-service
+    environment:
+      - spring.profiles.active=docker,streaming_partitioned,streaming_instance_1,kafka
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  review:
+    build: microservices/review-service
+    environment:
+      - spring.profiles.active=docker,streaming_partitioned,streaming_instance_0,kafka
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  review-1:
+    build: microservices/review-service
+    environment:
+      - spring.profiles.active=docker,streaming_partitioned,streaming_instance_1,kafka
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  product-composite:
+    build: microservices/product-composite-service
+    ports:
+      - "8080:8080"
+    environment:
+      - spring.profiles.active=docker,streaming_partitioned,kafka
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+
+  mongodb:
+    image: mongo:7.0.2
+    ports:
+      - "27017:27017"
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 5s
+      timeout: 2s
+      retries: 60
+
+  mysql:
+    image: mysql:8.0.35
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=review-db
+      - MYSQL_PASSWORD=root
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    healthcheck:
+      test: "/usr/bin/mysql --user=root --password=root --execute \"SHOW DATABASES;\""
+      interval: 5s
+      timeout: 2s
+      retries: 60
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.1
+    ports:
+      - "9092:9092"
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    environment:
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_BROKER_ID=1
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+    depends_on:
+      - zookeeper
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.1
+    restart: always
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    ports:
+      - "2181:2181"
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181

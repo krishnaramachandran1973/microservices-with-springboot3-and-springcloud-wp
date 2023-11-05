@@ -3,15 +3,27 @@ package com.itskool.integration;
 import com.itskool.dto.ProductDto;
 import com.itskool.dto.RecommendationDto;
 import com.itskool.dto.ReviewDto;
+import com.itskool.event.Event;
 import com.itskool.exceptions.InvalidInputException;
 import com.itskool.exceptions.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+
+import java.util.logging.Level;
+
+import static com.itskool.event.Event.Type.CREATE;
+import static com.itskool.event.Event.Type.DELETE;
 
 @Slf4j
 @Component
@@ -20,9 +32,14 @@ public class ProductCompositeIntegration {
     private final String productServiceUrl;
     private final String recommendationServiceUrl;
     private final String reviewServiceUrl;
+    private final StreamBridge streamBridge;
+    private final Scheduler publishEventScheduler;
 
     public ProductCompositeIntegration(
             WebClient webClient,
+            StreamBridge streamBridge,
+            @Qualifier("publishEventScheduler")
+                    Scheduler publishEventScheduler,
             @Value("${app.product-service.host}") String productServiceHost,
             @Value("${app.product-service.port}") int productServicePort,
             @Value("${app.recommendation-service.host}") String recommendationServiceHost,
@@ -31,13 +48,15 @@ public class ProductCompositeIntegration {
             @Value("${app.review-service.port}") int reviewServicePort) {
 
         this.webClient = webClient;
-        this.productServiceUrl = "http://" + productServiceHost + ":" + productServicePort + "/product";
-        this.recommendationServiceUrl = "http://" + recommendationServiceHost + ":" + recommendationServicePort + "/recommendation";
-        this.reviewServiceUrl = "http://" + reviewServiceHost + ":" + reviewServicePort + "/review";
+        this.streamBridge = streamBridge;
+        this.publishEventScheduler = publishEventScheduler;
+        this.productServiceUrl = "http://" + productServiceHost + ":" + productServicePort;
+        this.recommendationServiceUrl = "http://" + recommendationServiceHost + ":" + recommendationServicePort;
+        this.reviewServiceUrl = "http://" + reviewServiceHost + ":" + reviewServicePort;
     }
 
     public Mono<ProductDto> getProduct(Long productId) {
-        String url = productServiceUrl + "/" + productId;
+        String url = productServiceUrl + "/product/" + productId;
         log.debug("Will call getProduct API on URL: {}", url);
 
         return webClient.get()
@@ -50,7 +69,7 @@ public class ProductCompositeIntegration {
     }
 
     public Flux<RecommendationDto> getRecommendations(Long productId) {
-        String url = recommendationServiceUrl + "?productId=" + productId;
+        String url = recommendationServiceUrl + "/recommendation?productId=" + productId;
         log.debug("Will call getRecommendations API on URL: {}", url);
 
         return this.webClient.get()
@@ -61,7 +80,7 @@ public class ProductCompositeIntegration {
     }
 
     public Flux<ReviewDto> getReviews(Long productId) {
-        String url = reviewServiceUrl + "?productId=" + productId;
+        String url = reviewServiceUrl + "/review?productId=" + productId;
         log.debug("Will call getReviews API on URL: {}", url);
 
         return this.webClient.get()
@@ -72,63 +91,83 @@ public class ProductCompositeIntegration {
     }
 
     public Mono<ProductDto> createProduct(ProductDto productDto) {
-        return webClient.post()
-                .uri(productServiceUrl)
-                .bodyValue(productDto)
-                .retrieve()
-                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals, error -> Mono.error(new InvalidInputException(
-                        "Couldn't create Product with id" + productDto.getProductId())))
-                .bodyToMono(ProductDto.class);
+        return Mono.fromCallable(() -> {
+                    sendMessage("products-out-0", new Event<>(CREATE, productDto.getProductId(), productDto));
+                    return productDto;
+                })
+                .subscribeOn(publishEventScheduler);
     }
 
     public Mono<RecommendationDto> createRecommendation(RecommendationDto recommendationDto) {
-        return webClient.post()
-                .uri(recommendationServiceUrl)
-                .bodyValue(recommendationDto)
-                .retrieve()
-                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals, error -> Mono.error(new InvalidInputException(
-                        "Couldn't create Recommendation for productId" + recommendationDto.getProductId())))
-                .bodyToMono(RecommendationDto.class);
+        return Mono.fromCallable(() -> {
+                    sendMessage("recommendations-out-0", new Event<>(CREATE,
+                            recommendationDto.getProductId(), recommendationDto));
+                    return recommendationDto;
+                })
+                .subscribeOn(publishEventScheduler);
     }
 
     public Mono<ReviewDto> createReview(ReviewDto reviewDto) {
-        return webClient.post()
-                .uri(reviewServiceUrl)
-                .bodyValue(reviewDto)
-                .retrieve()
-                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals, error -> Mono.error(new InvalidInputException(
-                        "Couldn't create Review for productId" + reviewDto.getProductId())))
-                .bodyToMono(ReviewDto.class);
+        return Mono.fromCallable(() -> {
+                    sendMessage("reviews-out-0", new Event<>(CREATE,
+                            reviewDto.getProductId(), reviewDto));
+                    return reviewDto;
+                })
+                .subscribeOn(publishEventScheduler);
+    }
+
+    private void sendMessage(String bindingName, Event<Long, Object> event) {
+        log.debug("Sending a {} message to {}", event.getEventType(), bindingName);
+        Message<Event<Long, Object>> message = MessageBuilder.withPayload(event)
+                .setHeader("partitionKey", event.getKey())
+                .build();
+        streamBridge.send(bindingName, message);
     }
 
     public Mono<Void> deleteProduct(Long productId) {
-        String url = productServiceUrl + "/" + productId;
-        return webClient.delete()
-                .uri(url)
-                .retrieve()
-                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals, error -> Mono.error(new InvalidInputException(
-                        "Couldn't delete Product with productId" + productId)))
-                .bodyToMono(Void.class);
+        return Mono.fromRunnable(() -> sendMessage("products-out-0", new Event<>(DELETE, productId, null)))
+                .subscribeOn(publishEventScheduler)
+                .then();
 
     }
 
     public Mono<Void> deleteRecommendations(Long productId) {
-        String url = recommendationServiceUrl + "/" + productId;
-        return webClient.delete()
-                .uri(url)
-                .retrieve()
-                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals, error -> Mono.error(new InvalidInputException(
-                        "Couldn't delete Recommendations for Product with productId" + productId)))
-                .bodyToMono(Void.class);
+        return Mono.fromRunnable(() -> sendMessage("recommendations-out-0", new Event<>(DELETE, productId, null)))
+                .subscribeOn(publishEventScheduler)
+                .then();
     }
 
     public Mono<Void> deleteReviews(Long productId) {
-        String url = reviewServiceUrl + "/" + productId;
-        return webClient.delete()
+        return Mono.fromRunnable(() -> sendMessage("reviews-out-0", new Event<>(DELETE, productId, null)))
+                .subscribeOn(publishEventScheduler)
+                .then();
+    }
+
+    public Mono<Health> getProductHealth() {
+        return getHealth(productServiceUrl);
+    }
+
+    public Mono<Health> getRecommendationHealth() {
+        return getHealth(recommendationServiceUrl);
+    }
+
+    public Mono<Health> getReviewHealth() {
+        return getHealth(reviewServiceUrl);
+    }
+
+    private Mono<Health> getHealth(String url) {
+        url += "/actuator/health";
+        log.debug("Will call the Health API on URL: {}", url);
+        return webClient.get()
                 .uri(url)
                 .retrieve()
-                .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals, error -> Mono.error(new InvalidInputException(
-                        "Couldn't delete Reviews for Product with productId" + productId)))
-                .bodyToMono(Void.class);
+                .bodyToMono(String.class)
+                .map(s -> new Health.Builder().up()
+                        .build())
+                .onErrorResume(ex -> Mono.just(new Health.Builder().down(ex)
+                        .build()))
+                .log(log.getName(), Level.FINE);
     }
+
+
 }

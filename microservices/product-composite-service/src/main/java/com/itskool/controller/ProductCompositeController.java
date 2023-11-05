@@ -138,6 +138,7 @@ public class ProductCompositeController {
                     .forEach(reviewSummary -> {
                         ReviewDto reviewDto = ReviewDto.builder()
                                 .productId(productDto.getProductId())
+                                .reviewId(reviewSummary.getReviewId())
                                 .author(reviewSummary.getAuthor())
                                 .subject(reviewSummary.getSubject())
                                 .content(reviewSummary.getContent())
