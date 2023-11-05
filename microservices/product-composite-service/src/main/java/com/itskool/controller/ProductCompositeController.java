@@ -74,6 +74,7 @@ public class ProductCompositeController {
                                                                       .map(r -> RecommendationSummary.builder()
                                                                               .recommendationId(r.getRecommendationId())
                                                                               .author(r.getAuthor())
+                                                                              .content(r.getContent())
                                                                               .rate(r.getRate())
                                                                               .build())
                                                                       .collect(toList());
@@ -85,6 +86,7 @@ public class ProductCompositeController {
                                                               .reviewId(r.getReviewId())
                                                               .author(r.getAuthor())
                                                               .subject(r.getSubject())
+                                                              .content(r.getContent())
                                                               .build())
                                                       .collect(toList());
 
@@ -120,6 +122,7 @@ public class ProductCompositeController {
         monoList.add(integration.createProduct(productDto));
 
         if (productAggregate.getRecommendations() != null){
+            log.info("{}", productAggregate.getRecommendations());
             productAggregate.getRecommendations()
                     .forEach(recommendationSummary -> {
                         RecommendationDto recommendationDto = RecommendationDto.builder()
@@ -134,6 +137,7 @@ public class ProductCompositeController {
         }
 
         if (productAggregate.getReviews() != null){
+            log.info("{}", productAggregate.getReviews());
             productAggregate.getReviews()
                     .forEach(reviewSummary -> {
                         ReviewDto reviewDto = ReviewDto.builder()

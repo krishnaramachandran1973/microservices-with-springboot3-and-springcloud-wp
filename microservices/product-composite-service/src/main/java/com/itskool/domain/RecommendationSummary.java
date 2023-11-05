@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class RecommendationSummary {
     private Long recommendationId;
     private String author;
-    private int rate;
     private String content;
+    private int rate;
 }
