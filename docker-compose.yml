@@ -44,8 +44,6 @@ services:
 
   product-composite:
     build: microservices/product-composite-service
-    ports:
-      - "8080:8080"
     environment:
       - spring.profiles.active=docker
     deploy:
@@ -102,9 +100,21 @@ services:
 
   eureka:
     build: spring-cloud/eureka-server
-    ports:
-       - "8761:8761"
     deploy:
        resources:
          reservations:
            memory: 512m
+
+  gateway:
+    build: spring-cloud/gateway
+    environment:
+      - spring.profiles.active=docker
+    ports:
+      - "8080:8080"
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    depends_on:
+      eureka:
+        condition: service_started

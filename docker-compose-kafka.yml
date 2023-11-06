@@ -86,8 +86,6 @@ services:
 
   product-composite:
     build: microservices/product-composite-service
-    ports:
-      - "8080:8080"
     environment:
       - spring.profiles.active=docker,streaming_partitioned,kafka
     deploy:
@@ -157,8 +155,17 @@ services:
 
   eureka:
     build: spring-cloud/eureka-server
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+
+  gateway:
+    build: spring-cloud/gateway
+    environment:
+      - spring.profiles.active=docker
     ports:
-      - "8761:8761"
+      - "8080:8080"
     deploy:
       resources:
         reservations:
