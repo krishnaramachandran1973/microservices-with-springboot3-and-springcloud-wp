@@ -36,23 +36,20 @@ public class ProductCompositeIntegration {
     private final Scheduler publishEventScheduler;
 
     public ProductCompositeIntegration(
-            WebClient webClient,
+            WebClient.Builder webClientBuilder,
             StreamBridge streamBridge,
             @Qualifier("publishEventScheduler")
                     Scheduler publishEventScheduler,
             @Value("${app.product-service.host}") String productServiceHost,
-            @Value("${app.product-service.port}") int productServicePort,
             @Value("${app.recommendation-service.host}") String recommendationServiceHost,
-            @Value("${app.recommendation-service.port}") int recommendationServicePort,
-            @Value("${app.review-service.host}") String reviewServiceHost,
-            @Value("${app.review-service.port}") int reviewServicePort) {
+            @Value("${app.review-service.host}") String reviewServiceHost) {
 
-        this.webClient = webClient;
+        this.webClient = webClientBuilder.build();
         this.streamBridge = streamBridge;
         this.publishEventScheduler = publishEventScheduler;
-        this.productServiceUrl = "http://" + productServiceHost + ":" + productServicePort;
-        this.recommendationServiceUrl = "http://" + recommendationServiceHost + ":" + recommendationServicePort;
-        this.reviewServiceUrl = "http://" + reviewServiceHost + ":" + reviewServicePort;
+        this.productServiceUrl = "http://" + productServiceHost;
+        this.recommendationServiceUrl = "http://" + recommendationServiceHost;
+        this.reviewServiceUrl = "http://" + reviewServiceHost;
     }
 
     public Mono<ProductDto> getProduct(Long productId) {

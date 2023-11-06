@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.scheduler.Scheduler;
@@ -21,8 +22,9 @@ public class ProductCompositeServiceApplication {
     }
 
     @Bean
-    WebClient webClient() {
-        return WebClient.create();
+    @LoadBalanced
+    WebClient.Builder webClient() {
+        return WebClient.builder();
     }
 
     @Bean

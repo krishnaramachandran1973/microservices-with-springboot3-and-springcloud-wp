@@ -39,6 +39,7 @@ dependencies {
 	implementation 'com.mysql:mysql-connector-j'
 	implementation 'org.springframework.cloud:spring-cloud-starter-stream-rabbit'
 	implementation 'org.springframework.cloud:spring-cloud-starter-stream-kafka'
+	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
 	testImplementation "org.testcontainers:testcontainers:${testContainerVersion}"
 	testImplementation "org.testcontainers:junit-jupiter:${testContainerVersion}"

@@ -74,6 +74,7 @@ public class ProductCompositeController {
                                                                       .map(r -> RecommendationSummary.builder()
                                                                               .recommendationId(r.getRecommendationId())
                                                                               .author(r.getAuthor())
+                                                                              .content(r.getContent())
                                                                               .rate(r.getRate())
                                                                               .build())
                                                                       .collect(toList());
@@ -85,6 +86,7 @@ public class ProductCompositeController {
                                                               .reviewId(r.getReviewId())
                                                               .author(r.getAuthor())
                                                               .subject(r.getSubject())
+                                                              .content(r.getContent())
                                                               .build())
                                                       .collect(toList());
 

@@ -141,3 +141,12 @@ services:
       interval: 5s
       timeout: 2s
       retries: 60
+
+  eureka:
+    build: spring-cloud/eureka-server
+    ports:
+      - "8761:8761"
+    deploy:
+      resources:
+        reservations:
+          memory: 512m

@@ -23,7 +23,6 @@ public class ProductCompositeProperties {
     @NoArgsConstructor
     public static class ProductService {
         private String host;
-        private String port;
     }
 
     @Getter
@@ -31,7 +30,6 @@ public class ProductCompositeProperties {
     @NoArgsConstructor
     public static class RecommendationService {
         private String host;
-        private String port;
     }
 
     @Getter
@@ -39,6 +37,5 @@ public class ProductCompositeProperties {
     @NoArgsConstructor
     public static class ReviewService {
         private String host;
-        private String port;
     }
 }
