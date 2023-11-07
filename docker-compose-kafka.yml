@@ -92,6 +92,11 @@ services:
       resources:
         reservations:
           memory: 512m
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      auth-server:
+        condition: service_healthy
 
   mongodb:
     image: mongo:7.0.2
@@ -165,8 +170,30 @@ services:
     environment:
       - spring.profiles.active=docker
     ports:
-      - "8080:8080"
+      - "8443:8443"
     deploy:
       resources:
         reservations:
           memory: 512m
+    depends_on:
+      eureka:
+        condition: service_started
+      auth-server:
+        condition: service_healthy
+
+  auth-server:
+    build: spring-cloud/authorization-server
+    environment:
+      - spring.profiles.active=docker
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    healthcheck:
+      test: [ "CMD", "curl", "-fs", "http://localhost:9999/actuator/health" ]
+      interval: 5s
+      timeout: 2s
+      retries: 60
+    depends_on:
+      eureka:
+        condition: service_started

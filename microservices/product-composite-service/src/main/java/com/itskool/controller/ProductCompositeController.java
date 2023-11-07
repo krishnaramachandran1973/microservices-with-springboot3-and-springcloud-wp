@@ -13,19 +13,27 @@ import com.itskool.util.ServiceUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextImpl;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.logging.Level.FINE;
 import static java.util.stream.Collectors.toList;
 
+@SecurityRequirement(name = "security_auth")
 @Tag(name = "ProductComposite", description = "REST API for composite product information.")
 @Slf4j
 @RequiredArgsConstructor
@@ -34,6 +42,7 @@ import static java.util.stream.Collectors.toList;
 public class ProductCompositeController {
     private final ServiceUtil util;
     private final ProductCompositeIntegration integration;
+    private final SecurityContext nullSecCtx = new SecurityContextImpl();
 
     @Operation(
             summary = "${api.product-composite.get-composite-product.description}",
@@ -110,8 +119,9 @@ public class ProductCompositeController {
     })
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PostMapping
-    public Mono<Void> createProduct(@RequestBody ProductAggregate productAggregate){
+    public Mono<Void> createProduct(@RequestBody ProductAggregate productAggregate) {
         List<Mono<?>> monoList = new ArrayList<>();
+        monoList.add(getLogAuthorizationInfoMono());
 
         log.info("Will create a new composite entity for product.id: {}", productAggregate.getProductId());
         ProductDto productDto = ProductDto.builder()
@@ -121,7 +131,7 @@ public class ProductCompositeController {
                 .build();
         monoList.add(integration.createProduct(productDto));
 
-        if (productAggregate.getRecommendations() != null){
+        if (productAggregate.getRecommendations() != null) {
             productAggregate.getRecommendations()
                     .forEach(recommendationSummary -> {
                         RecommendationDto recommendationDto = RecommendationDto.builder()
@@ -135,7 +145,7 @@ public class ProductCompositeController {
                     });
         }
 
-        if (productAggregate.getReviews() != null){
+        if (productAggregate.getReviews() != null) {
             productAggregate.getReviews()
                     .forEach(reviewSummary -> {
                         ReviewDto reviewDto = ReviewDto.builder()
@@ -150,8 +160,8 @@ public class ProductCompositeController {
         }
         log.debug("createCompositeProduct: composite entities created for productId: {}", productAggregate.getProductId());
 
-        return Mono.zip(r->"",monoList.toArray(new Mono[0]))
-                .doOnError(ex-> log.warn("createCompositeProduct failed: {}", ex.toString()))
+        return Mono.zip(r -> "", monoList.toArray(new Mono[0]))
+                .doOnError(ex -> log.warn("createCompositeProduct failed: {}", ex.toString()))
                 .then();
     }
 
@@ -164,7 +174,7 @@ public class ProductCompositeController {
     })
     @ResponseStatus(HttpStatus.ACCEPTED)
     @DeleteMapping("/{productId}")
-    public Mono<Void> deleteProduct(@PathVariable Long productId){
+    public Mono<Void> deleteProduct(@PathVariable Long productId) {
         log.info("Will delete a product aggregate for product.id: {}", productId);
         return Mono.zip(
                         r -> "",
@@ -172,6 +182,47 @@ public class ProductCompositeController {
                         integration.deleteRecommendations(productId),
                         integration.deleteReviews(productId))
                 .doOnError(ex -> log.warn("delete failed: {}", ex.toString()))
-                .log(log.getName(), FINE).then();
+                .log(log.getName(), FINE)
+                .then();
+    }
+
+    private Mono<SecurityContext> getLogAuthorizationInfoMono() {
+        return getSecurityContextMono().doOnNext(sc -> logAuthorizationInfo(sc));
+    }
+
+    private Mono<SecurityContext> getSecurityContextMono() {
+        return ReactiveSecurityContextHolder.getContext()
+                .defaultIfEmpty(nullSecCtx);
+    }
+
+    private void logAuthorizationInfo(SecurityContext sc) {
+        if (sc != null && sc.getAuthentication() != null && sc.getAuthentication() instanceof JwtAuthenticationToken) {
+            Jwt jwtToken = ((JwtAuthenticationToken) sc.getAuthentication()).getToken();
+            logAuthorizationInfo(jwtToken);
+        }
+        else {
+            log.warn("No JWT based Authentication supplied, running tests are we?");
+        }
+    }
+
+    private void logAuthorizationInfo(Jwt jwt) {
+        if (jwt == null) {
+            log.warn("No JWT supplied, running tests are we?");
+        }
+        else {
+            if (log.isDebugEnabled()) {
+                URL issuer = jwt.getIssuer();
+                List<String> audience = jwt.getAudience();
+                Object subject = jwt.getClaims()
+                        .get("sub");
+                Object scopes = jwt.getClaims()
+                        .get("scope");
+                Object expires = jwt.getClaims()
+                        .get("exp");
+
+                log.debug("Authorization info: Subject: {}, scopes: {}, expires {}: issuer: {}, audience: {}", subject,
+                        scopes, expires, issuer, audience);
+            }
+        }
     }
 }

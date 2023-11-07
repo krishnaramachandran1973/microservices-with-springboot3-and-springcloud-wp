@@ -1,2 +1,8 @@
 rootProject.name = 'microservices-with-springboot3-and-springcloud-wp'
-include('microservices:product-service', 'microservices:review-service', 'microservices:recommendation-service','microservices:product-composite-service','spring-cloud:eureka-server','spring-cloud:gateway')
+include('microservices:product-service',
+        'microservices:review-service',
+        'microservices:recommendation-service',
+        'microservices:product-composite-service',
+        'spring-cloud:eureka-server',
+        'spring-cloud:gateway',
+        'spring-cloud:authorization-server')
