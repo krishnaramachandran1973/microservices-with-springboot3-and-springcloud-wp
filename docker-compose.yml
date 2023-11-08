@@ -4,6 +4,9 @@ services:
     build: microservices/product-service
     environment:
       - spring.profiles.active=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CLOUD_CONFIG_USERNAME=${CONFIG_SERVER_USR}
+      - SPRING_CLOUD_CONFIG_PASSWORD=${CONFIG_SERVER_PWD}
     deploy:
       resources:
         reservations:
@@ -18,6 +21,9 @@ services:
     build: microservices/recommendation-service
     environment:
       - spring.profiles.active=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CLOUD_CONFIG_USERNAME=${CONFIG_SERVER_USR}
+      - SPRING_CLOUD_CONFIG_PASSWORD=${CONFIG_SERVER_PWD}
     deploy:
       resources:
         reservations:
@@ -32,6 +38,9 @@ services:
     build: microservices/review-service
     environment:
       - spring.profiles.active=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CLOUD_CONFIG_USERNAME=${CONFIG_SERVER_USR}
+      - SPRING_CLOUD_CONFIG_PASSWORD=${CONFIG_SERVER_PWD}
     deploy:
       resources:
         reservations:
@@ -46,6 +55,9 @@ services:
     build: microservices/product-composite-service
     environment:
       - spring.profiles.active=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CLOUD_CONFIG_USERNAME=${CONFIG_SERVER_USR}
+      - SPRING_CLOUD_CONFIG_PASSWORD=${CONFIG_SERVER_PWD}
     deploy:
       resources:
         reservations:
@@ -105,6 +117,11 @@ services:
 
   eureka:
     build: spring-cloud/eureka-server
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CLOUD_CONFIG_USERNAME=${CONFIG_SERVER_USR}
+      - SPRING_CLOUD_CONFIG_PASSWORD=${CONFIG_SERVER_PWD}
     deploy:
        resources:
          reservations:
@@ -114,6 +131,9 @@ services:
     build: spring-cloud/gateway
     environment:
       - spring.profiles.active=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CLOUD_CONFIG_USERNAME=${CONFIG_SERVER_USR}
+      - SPRING_CLOUD_CONFIG_PASSWORD=${CONFIG_SERVER_PWD}
     ports:
       - "8443:8443"
     deploy:
@@ -130,6 +150,9 @@ services:
     build: spring-cloud/authorization-server
     environment:
       - spring.profiles.active=docker
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - SPRING_CLOUD_CONFIG_USERNAME=${CONFIG_SERVER_USR}
+      - SPRING_CLOUD_CONFIG_PASSWORD=${CONFIG_SERVER_PWD}
     deploy:
       resources:
         reservations:
@@ -142,3 +165,19 @@ services:
     depends_on:
       eureka:
         condition: service_started
+
+  config-server:
+    build: spring-cloud/config-server
+    ports:
+      - "8888:8888"
+    deploy:
+      resources:
+        reservations:
+          memory: 512m
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker,native
+      - ENCRYPT_KEY=${CONFIG_SERVER_ENCRYPT_KEY}
+      - SPRING_SECURITY_USER_NAME=${CONFIG_SERVER_USR}
+      - SPRING_SECURITY_USER_PASSWORD=${CONFIG_SERVER_PWD}
+    volumes:
+      - $PWD/config-repo:/config-repo

@@ -13,4 +13,5 @@ public class ReviewProperties {
     private String eurekaServer;
     private String eurekaUsername;
     private String eurekaPassword;
+    private String configServer;
 }

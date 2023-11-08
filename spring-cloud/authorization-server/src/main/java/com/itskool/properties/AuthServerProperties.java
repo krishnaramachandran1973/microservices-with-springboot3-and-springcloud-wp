@@ -11,4 +11,5 @@ public class AuthServerProperties {
     private String eurekaServer;
     private String eurekaUsername;
     private String eurekaPassword;
+    private String configServer;
 }

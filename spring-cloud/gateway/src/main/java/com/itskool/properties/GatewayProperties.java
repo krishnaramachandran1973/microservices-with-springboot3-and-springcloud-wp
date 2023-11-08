@@ -12,4 +12,5 @@ public class GatewayProperties {
     private String eurekaUsername;
     private String eurekaPassword;
     private String authServer;
+    private String configServer;
 }

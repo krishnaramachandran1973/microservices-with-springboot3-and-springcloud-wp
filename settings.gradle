@@ -5,4 +5,5 @@ include('microservices:product-service',
         'microservices:product-composite-service',
         'spring-cloud:eureka-server',
         'spring-cloud:gateway',
-        'spring-cloud:authorization-server')
+        'spring-cloud:authorization-server',
+        'spring-cloud:config-server')

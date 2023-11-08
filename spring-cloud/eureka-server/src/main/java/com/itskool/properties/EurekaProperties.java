@@ -10,4 +10,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class EurekaProperties {
     private String eurekaUsername;
     private String eurekaPassword;
+    private String configServer;
 }
