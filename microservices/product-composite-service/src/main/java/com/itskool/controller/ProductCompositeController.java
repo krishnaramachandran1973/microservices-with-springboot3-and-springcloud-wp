@@ -54,13 +54,14 @@ public class ProductCompositeController {
             @ApiResponse(responseCode = "422", description = "${api.responseCodes.unprocessableEntity.description}")
     })
     @GetMapping("/{productId}")
-    Mono<ProductAggregate> getProduct(@PathVariable Long productId) {
+    Mono<ProductAggregate> getProduct(@PathVariable Long productId, @RequestParam(value = "delay", required = false, defaultValue = "0") int delay,
+                                      @RequestParam(value = "faultPercent", required = false, defaultValue = "0") int faultPercent) {
         log.info("Will get composite product info for product.id={}", productId);
 
         return Mono.zip(
                         values -> createProductAggregate((ProductDto) values[0], (List<RecommendationDto>) values[1],
                                 (List<ReviewDto>) values[2], util.getServiceAddress()),
-                        integration.getProduct(productId),
+                        integration.getProduct(productId, delay,faultPercent),
                         integration.getRecommendations(productId)
                                 .collectList(),
                         integration.getReviews(productId)

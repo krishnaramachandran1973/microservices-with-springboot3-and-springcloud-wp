@@ -13,6 +13,9 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+import java.util.Random;
+
 import static java.util.logging.Level.FINE;
 
 @Slf4j
@@ -22,18 +25,43 @@ public class ProductService {
     private final ServiceUtil util;
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
+    private final Random randomNumberGenerator = new Random();
 
-    public Mono<ProductDto> getProductById(Long productId) {
+    public Mono<ProductDto> getProductById(Long productId, int delay, int faultPercent) {
         if (productId < 1) {
             throw new InvalidInputException("Invalid productId: " + productId);
         }
         log.info("Will get product info for id={}", productId);
 
         return productRepository.findProductByProductId(productId)
+                .map(product -> throwErrorIfBadLuck(product, faultPercent))
+                .delayElement(Duration.ofSeconds(delay))
                 .switchIfEmpty(Mono.error(new NotFoundException("No product found for productId: " + productId)))
                 .log(log.getName(), FINE)
                 .map(productMapper::entityToDto)
                 .map(this::setServiceAddress);
+    }
+
+    private Product throwErrorIfBadLuck(Product entity, int faultPercent) {
+        if (faultPercent == 0) {
+            return entity;
+        }
+        int randomThreshold = getRandomNumber(1, 100);
+        if (faultPercent < randomThreshold) {
+            log.debug("We got lucky, no error occurred, {} < {}", faultPercent, randomThreshold);
+        }
+        else {
+            log.info("Bad luck, an error occurred, {} >= {}", faultPercent, randomThreshold);
+            throw new RuntimeException("Something went wrong...");
+        }
+        return entity;
+    }
+
+    private int getRandomNumber(int min, int max) {
+        if (max < min) {
+            throw new IllegalArgumentException("Max must be greater than min");
+        }
+        return randomNumberGenerator.nextInt((max - min) + 1) + min;
     }
 
     public Mono<ProductDto> createProduct(ProductDto productDto) {

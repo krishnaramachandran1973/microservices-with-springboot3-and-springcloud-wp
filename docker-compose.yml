@@ -53,6 +53,8 @@ services:
 
   product-composite:
     build: microservices/product-composite-service
+    ports:
+      - "8080:8080"
     environment:
       - spring.profiles.active=docker
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888

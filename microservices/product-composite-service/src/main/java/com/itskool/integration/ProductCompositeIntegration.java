@@ -6,6 +6,11 @@ import com.itskool.dto.ReviewDto;
 import com.itskool.event.Event;
 import com.itskool.exceptions.InvalidInputException;
 import com.itskool.exceptions.NotFoundException;
+import com.itskool.util.ServiceUtil;
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,9 +20,12 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
+
+import java.net.URI;
 
 import static com.itskool.event.Event.Type.CREATE;
 import static com.itskool.event.Event.Type.DELETE;
@@ -49,8 +57,13 @@ public class ProductCompositeIntegration {
         this.reviewServiceUrl = "http://" + reviewServiceHost;
     }
 
-    public Mono<ProductDto> getProduct(Long productId) {
-        String url = productServiceUrl + "/product/" + productId;
+    @Retry(name = "product")
+    @TimeLimiter(name = "product")
+    @CircuitBreaker(name = "product", fallbackMethod = "getProductFallbackValue")
+    public Mono<ProductDto> getProduct(Long productId, int delay, int faultPercent) {
+        URI url = UriComponentsBuilder
+                .fromUriString(productServiceUrl + "/product/{productId}?delay={delay}&faultPercent={faultPercent}")
+                .build(productId, delay, faultPercent);
         log.debug("Will call getProduct API on URL: {}", url);
 
         return webClient.get()
@@ -60,6 +73,26 @@ public class ProductCompositeIntegration {
                 .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals, error -> Mono.error(new InvalidInputException(
                         "Product not found for id " + productId)))
                 .bodyToMono(ProductDto.class);
+    }
+
+    private Mono<ProductDto> getProductFallbackValue(Long productId, int delay, int faultPercent,
+                                                     CallNotPermittedException ex) {
+        log.warn("Creating a fail-fast fallback product for productId = {}, delay = {}, faultPercent = {} and " +
+                        "exception = {} ",
+                productId, delay, faultPercent, ex.toString());
+
+        if (productId == 13) {
+            String errMsg = "Product Id: " + productId + " not found in fallback cache!";
+            log.warn(errMsg);
+            throw new NotFoundException(errMsg);
+        }
+
+        return Mono.just(ProductDto.builder()
+                .productId(productId)
+                .name("Fallback product" + productId)
+                .weight(0)
+                .serviceAddress("tempAddress")
+                .build());
     }
 
     public Flux<RecommendationDto> getRecommendations(Long productId) {
