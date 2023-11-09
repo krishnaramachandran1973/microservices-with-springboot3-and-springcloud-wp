@@ -6,7 +6,6 @@ import com.itskool.dto.ReviewDto;
 import com.itskool.event.Event;
 import com.itskool.exceptions.InvalidInputException;
 import com.itskool.exceptions.NotFoundException;
-import com.itskool.util.ServiceUtil;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -41,7 +40,7 @@ public class ProductCompositeIntegration {
     private final Scheduler publishEventScheduler;
 
     public ProductCompositeIntegration(
-            WebClient.Builder webClientBuilder,
+            WebClient webClient,
             StreamBridge streamBridge,
             @Qualifier("publishEventScheduler")
                     Scheduler publishEventScheduler,
@@ -49,7 +48,7 @@ public class ProductCompositeIntegration {
             @Value("${app.recommendation-service.host}") String recommendationServiceHost,
             @Value("${app.review-service.host}") String reviewServiceHost) {
 
-        this.webClient = webClientBuilder.build();
+        this.webClient = webClient;
         this.streamBridge = streamBridge;
         this.publishEventScheduler = publishEventScheduler;
         this.productServiceUrl = "http://" + productServiceHost;

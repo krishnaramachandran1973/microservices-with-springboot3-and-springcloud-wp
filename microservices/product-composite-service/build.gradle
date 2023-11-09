@@ -30,6 +30,10 @@ ext {
 	set('resilience4jVersion', "2.1.0")
 }
 
+springBoot {
+	buildInfo()
+}
+
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
@@ -46,6 +50,9 @@ dependencies {
 	implementation 'io.github.resilience4j:resilience4j-spring-boot3'
 	implementation 'io.github.resilience4j:resilience4j-reactor'
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	implementation 'org.springframework.cloud:spring-cloud-starter-loadbalancer'
+	implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+	implementation 'io.opentelemetry:opentelemetry-exporter-zipkin'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'

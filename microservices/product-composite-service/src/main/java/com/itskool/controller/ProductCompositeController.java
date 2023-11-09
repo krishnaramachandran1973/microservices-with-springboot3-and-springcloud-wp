@@ -9,6 +9,7 @@ import com.itskool.dto.ProductDto;
 import com.itskool.dto.RecommendationDto;
 import com.itskool.dto.ReviewDto;
 import com.itskool.integration.ProductCompositeIntegration;
+import com.itskool.tracing.ObservationUtil;
 import com.itskool.util.ServiceUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -29,6 +30,7 @@ import reactor.core.publisher.Mono;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static java.util.logging.Level.FINE;
 import static java.util.stream.Collectors.toList;
@@ -42,6 +44,7 @@ import static java.util.stream.Collectors.toList;
 public class ProductCompositeController {
     private final ServiceUtil util;
     private final ProductCompositeIntegration integration;
+    private final ObservationUtil observationUtil;
     private final SecurityContext nullSecCtx = new SecurityContextImpl();
 
     @Operation(
@@ -61,7 +64,7 @@ public class ProductCompositeController {
         return Mono.zip(
                         values -> createProductAggregate((ProductDto) values[0], (List<RecommendationDto>) values[1],
                                 (List<ReviewDto>) values[2], util.getServiceAddress()),
-                        integration.getProduct(productId, delay,faultPercent),
+                        integration.getProduct(productId, delay, faultPercent),
                         integration.getRecommendations(productId)
                                 .collectList(),
                         integration.getReviews(productId)
@@ -121,6 +124,10 @@ public class ProductCompositeController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PostMapping
     public Mono<Void> createProduct(@RequestBody ProductAggregate productAggregate) {
+        return observationWithProductInfo(productAggregate.getProductId(), () -> createProductInternal(productAggregate));
+    }
+
+    private Mono<Void> createProductInternal(ProductAggregate productAggregate) {
         List<Mono<?>> monoList = new ArrayList<>();
         monoList.add(getLogAuthorizationInfoMono());
 
@@ -164,6 +171,15 @@ public class ProductCompositeController {
         return Mono.zip(r -> "", monoList.toArray(new Mono[0]))
                 .doOnError(ex -> log.warn("createCompositeProduct failed: {}", ex.toString()))
                 .then();
+    }
+
+    private <T> T observationWithProductInfo(Long productInfo, Supplier<T> supplier) {
+        return observationUtil.observe(
+                "composite observation",
+                "product info",
+                "productId",
+                String.valueOf(productInfo),
+                supplier);
     }
 
     @Operation(
