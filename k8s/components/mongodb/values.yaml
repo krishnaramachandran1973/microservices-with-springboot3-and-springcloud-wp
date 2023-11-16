@@ -1,0 +1,14 @@
+deployment:
+  name: mongodb
+  label: mongodb
+
+  container:
+    image: mongo
+    tag: 7.0.2
+    port: 27017
+
+  service:
+    name: mongodb
+    type: ClusterIP
+    selector: mongodb
+    port: 27017

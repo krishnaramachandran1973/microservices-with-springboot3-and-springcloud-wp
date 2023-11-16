@@ -1,0 +1,19 @@
+deployment:
+  name: recommendation
+  label: recommendation
+
+  container:
+    image: krishnaramachandran1973/recommendation-service
+    tag: latest
+    port: 80
+    spring_profile: SPRING_PROFILES_ACTIVE
+    spring_profile_value: docker
+    cloud_config_uri_value: http://config-server
+    livenessProbe_url: /actuator/health/liveness
+    readinessProbe_url: /actuator/health/readiness
+
+  service:
+    name: recommendation
+    type: ClusterIP
+    selector: recommendation
+    port: 80

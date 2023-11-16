@@ -1,0 +1,16 @@
+deployment:
+  name: rabbitmq
+  label: rabbitmq
+
+  container:
+    image: rabbitmq
+    tag: 3.11.8-management
+    port: 5672
+    management_port: 15672
+
+  service:
+    name: rabbitmq
+    type: ClusterIP
+    selector: rabbitmq
+    port: 5672
+    ui_port: 15672

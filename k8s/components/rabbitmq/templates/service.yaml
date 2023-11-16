@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.deployment.service.name }}
+spec:
+  type: {{ .Values.deployment.service.type }}
+  ports:
+    - name: client-port
+      port: {{ .Values.deployment.service.port }}
+      targetPort: {{ .Values.deployment.container.port }}
+    - name: ui-port
+      port: {{ .Values.deployment.service.ui_port }}
+      targetPort: {{ .Values.deployment.container.management_port}}
+  selector:
+    app: {{ .Values.deployment.service.selector }}

@@ -1,0 +1,14 @@
+deployment:
+  name: mysql
+  label: mysql
+
+  container:
+    image: mysql
+    tag: 8.0.35
+    port: 3306
+
+  service:
+    name: mysql
+    type: ClusterIP
+    selector: mysql
+    port: 3306

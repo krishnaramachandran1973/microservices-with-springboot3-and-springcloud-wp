@@ -145,13 +145,6 @@ services:
       timeout: 2s
       retries: 60
 
-  eureka:
-    build: spring-cloud/eureka-server
-    deploy:
-      resources:
-        reservations:
-          memory: 512m
-
   gateway:
     build: spring-cloud/gateway
     environment:

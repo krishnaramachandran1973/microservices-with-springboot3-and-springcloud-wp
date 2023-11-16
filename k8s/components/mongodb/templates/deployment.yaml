@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.deployment.name }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.deployment.label }}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{.Values.deployment.label }}
+    spec:
+      containers:
+        - name: {{.Values.deployment.label}}
+          image: {{.Values.deployment.container.image}}:{{.Values.deployment.container.tag}}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: client-port
+              containerPort: {{.Values.deployment.container.port}}
+          resources:
+            limits:
+              cpu: '500m'
+              memory: '512Mi'

@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Hooks;
@@ -19,7 +18,6 @@ import reactor.core.scheduler.Schedulers;
 @EnableConfigurationProperties(ProductCompositeProperties.class)
 @SpringBootApplication
 public class ProductCompositeServiceApplication {
-    private final ReactorLoadBalancerExchangeFilterFunction lbFunction;
 
     public static void main(String[] args) {
         Hooks.enableAutomaticContextPropagation();
@@ -29,7 +27,6 @@ public class ProductCompositeServiceApplication {
     @Bean
     WebClient webClient() {
         return WebClient.builder()
-                .filter(lbFunction)
                 .build();
     }
 

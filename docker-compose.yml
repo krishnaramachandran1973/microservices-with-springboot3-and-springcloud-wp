@@ -2,6 +2,7 @@ version: '3.8'
 services:
   product:
     build: microservices/product-service
+    image: krishnaramachandran1973/product-service
     environment:
       - spring.profiles.active=docker
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
@@ -19,6 +20,7 @@ services:
 
   recommendation:
     build: microservices/recommendation-service
+    image: krishnaramachandran1973/recommendation-service
     environment:
       - spring.profiles.active=docker
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
@@ -36,6 +38,7 @@ services:
 
   review:
     build: microservices/review-service
+    image: krishnaramachandran1973/review-service
     environment:
       - spring.profiles.active=docker
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
@@ -53,6 +56,7 @@ services:
 
   product-composite:
     build: microservices/product-composite-service
+    image: krishnaramachandran1973/product-composite-service
     ports:
       - "8080:8080"
     environment:
@@ -117,20 +121,9 @@ services:
       timeout: 2s
       retries: 60
 
-  eureka:
-    build: spring-cloud/eureka-server
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
-      - SPRING_CLOUD_CONFIG_USERNAME=${CONFIG_SERVER_USR}
-      - SPRING_CLOUD_CONFIG_PASSWORD=${CONFIG_SERVER_PWD}
-    deploy:
-       resources:
-         reservations:
-           memory: 512m
-
   gateway:
     build: spring-cloud/gateway
+    image: krishnaramachandran1973/gateway
     environment:
       - spring.profiles.active=docker
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
@@ -142,16 +135,12 @@ services:
       resources:
         reservations:
           memory: 512m
-    depends_on:
-      eureka:
-        condition: service_started
-      auth-server:
-        condition: service_healthy
 
   auth-server:
     build: spring-cloud/authorization-server
+    image: krishnaramachandran1973/auth-server
     environment:
-      - spring.profiles.active=docker
+      - spring.profiles.active=default
       - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
       - SPRING_CLOUD_CONFIG_USERNAME=${CONFIG_SERVER_USR}
       - SPRING_CLOUD_CONFIG_PASSWORD=${CONFIG_SERVER_PWD}
@@ -164,12 +153,10 @@ services:
       interval: 5s
       timeout: 2s
       retries: 60
-    depends_on:
-      eureka:
-        condition: service_started
 
   config-server:
     build: spring-cloud/config-server
+    image: krishnaramachandran1973/config-server
     ports:
       - "8888:8888"
     deploy:

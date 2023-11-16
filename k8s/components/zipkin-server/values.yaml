@@ -1,0 +1,14 @@
+deployment:
+  name: zipkin-server
+  label: zipkin-server
+
+  container:
+    image: openzipkin/zipkin
+    tag: latest
+    port: 9411
+
+  service:
+    name: zipkin-server
+    type: ClusterIP
+    selector: zipkin-server
+    port: 9411

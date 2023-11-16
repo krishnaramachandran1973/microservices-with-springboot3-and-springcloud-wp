@@ -1,0 +1,19 @@
+deployment:
+  name: auth-server
+  label: auth-server
+
+  container:
+    image: krishnaramachandran1973/auth-server
+    tag: latest
+    port: 9999
+    spring_profile: SPRING_PROFILES_ACTIVE
+    spring_profile_value: default
+    cloud_config_uri_value: http://config-server
+    livenessProbe_url: /actuator/health/liveness
+    readinessProbe_url: /actuator/health/readiness
+
+  service:
+    name: auth-server
+    type: ClusterIP
+    selector: auth-server
+    port: 9999
