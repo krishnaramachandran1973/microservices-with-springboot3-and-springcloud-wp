@@ -1,0 +1,3 @@
+ingress:
+  name: ms-ingress
+  secret: tls-secret

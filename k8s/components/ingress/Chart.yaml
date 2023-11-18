@@ -1,6 +1,6 @@
 apiVersion: v2
-name: gateway
-description: Gateway/ Edge service
+name: ingress
+description: Ingress kubernetes service
 type: application
 version: 0.1.0
 appVersion: '1.0'
