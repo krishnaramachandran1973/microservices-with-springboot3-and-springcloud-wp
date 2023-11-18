@@ -8,7 +8,7 @@ deployment:
     port: 80
     spring_profile: SPRING_PROFILES_ACTIVE
     spring_profile_value: docker
-    cloud_config_uri_value: http://config-server
+    config_location: file:/config-repo/application.properties,file:/config-repo/application-docker.properties,file:/config-repo/review.properties,file:/config-repo/review-docker.properties
     livenessProbe_url: /actuator/health/liveness
     readinessProbe_url: /actuator/health/readiness
 

@@ -154,23 +154,6 @@ services:
       timeout: 2s
       retries: 60
 
-  config-server:
-    build: spring-cloud/config-server
-    image: krishnaramachandran1973/config-server
-    ports:
-      - "8888:8888"
-    deploy:
-      resources:
-        reservations:
-          memory: 512m
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker,native
-      - ENCRYPT_KEY=${CONFIG_SERVER_ENCRYPT_KEY}
-      - SPRING_SECURITY_USER_NAME=${CONFIG_SERVER_USR}
-      - SPRING_SECURITY_USER_PASSWORD=${CONFIG_SERVER_PWD}
-    volumes:
-      - $PWD/config-repo:/config-repo
-
   zipkin-server:
     image: openzipkin/zipkin:latest
     restart: always

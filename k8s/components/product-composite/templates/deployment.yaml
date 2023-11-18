@@ -19,12 +19,18 @@ spec:
           env:
             - name: {{.Values.deployment.container.spring_profile}}
               value: {{.Values.deployment.container.spring_profile_value}}
-            - name: SPRING_CLOUD_CONFIG_URI
-              value: {{.Values.deployment.container.cloud_config_uri_value}}
-            - name: SPRING_CLOUD_CONFIG_USERNAME
-              value: dev-user  
-            - name: SPRING_CLOUD_CONFIG_PASSWORD
-              value: dev-pwd   
+            - name: SPRING_CONFIG_LOCATION
+              value: {{.Values.deployment.container.config_location}}
+            - name: SPRING_RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: ms-secrets
+                  key: rabbitmq-user
+            - name: SPRING_RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ms-secrets
+                  key: rabbitmq-password
           ports:
             - containerPort: {{.Values.deployment.container.port}}
           livenessProbe:
@@ -43,3 +49,13 @@ spec:
             limits:
               cpu: '500m'
               memory: '512Mi'
+          volumeMounts:
+            - mountPath: /config-repo
+              name: config
+      volumes:
+        - name: config
+          configMap:
+            name: ms-config
+        - name: secrets
+          secret:
+            secretName: ms-secrets

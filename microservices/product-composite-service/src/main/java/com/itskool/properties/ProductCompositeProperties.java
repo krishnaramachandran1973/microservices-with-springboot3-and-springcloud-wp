@@ -17,11 +17,7 @@ public class ProductCompositeProperties {
     private ReviewService reviewService = new ReviewService();
     private Integer threadPoolSize;
     private Integer taskQueueSize;
-    private String eurekaServer;
-    private String eurekaUsername;
-    private String eurekaPassword;
     private String authServer;
-    private String configServer;
 
     @Getter
     @Setter
