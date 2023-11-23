@@ -3,5 +3,4 @@ include('microservices:product-service',
         'microservices:review-service',
         'microservices:recommendation-service',
         'microservices:product-composite-service',
-        'spring-cloud:gateway',
         'spring-cloud:authorization-server')

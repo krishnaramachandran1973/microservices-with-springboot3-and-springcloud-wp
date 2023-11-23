@@ -1,0 +1,6 @@
+apiVersion: v2
+name: istio-blue-green
+description: Istio blue green and canary deployment
+type: application
+version: 0.1.0
+appVersion: '1.0'

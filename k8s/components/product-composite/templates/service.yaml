@@ -5,7 +5,11 @@ metadata:
 spec:
   type: {{ .Values.deployment.service.type }}
   ports:
-    - port: {{ .Values.deployment.service.port }}
+    - name: {{.Values.deployment.service.port_name}}
+      port: {{ .Values.deployment.service.port }}
       targetPort: {{ .Values.deployment.container.port }}
+    - name: {{.Values.deployment.service.mgmt_port_name}}
+      port: {{ .Values.deployment.service.mgmt_port }}
+      targetPort: {{ .Values.deployment.container.mgmt_port}}
   selector:
     app: {{ .Values.deployment.service.selector }}

@@ -39,8 +39,8 @@ dependencies {
 	implementation 'org.springframework.cloud:spring-cloud-starter-stream-rabbit'
 	implementation 'org.springframework.cloud:spring-cloud-starter-stream-kafka'
 	implementation 'org.springframework.retry:spring-retry'
-	implementation 'io.micrometer:micrometer-tracing-bridge-otel'
-	implementation 'io.opentelemetry:opentelemetry-exporter-zipkin'
+	implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+	implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 
 	testImplementation "org.testcontainers:testcontainers:${testContainerVersion}"
 	testImplementation "org.testcontainers:junit-jupiter:${testContainerVersion}"

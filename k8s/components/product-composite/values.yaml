@@ -6,9 +6,11 @@ deployment:
     image: krishnaramachandran1973/product-composite-service
     tag: latest
     port: 80
+    mgmt_port: 4004
     spring_profile: SPRING_PROFILES_ACTIVE
     spring_profile_value: docker
     config_location: file:/config-repo/application.properties,file:/config-repo/application-docker.properties,file:/config-repo/product-composite.properties,file:/config-repo/product-composite-docker.properties
+    readiness_liveness_port: 4004
     livenessProbe_url: /actuator/health/liveness
     readinessProbe_url: /actuator/health/readiness
 
@@ -16,4 +18,7 @@ deployment:
     name: product-composite
     type: ClusterIP
     selector: product-composite
+    port_name: http
     port: 80
+    mgmt_port_name: http-mgmt-port
+    mgmt_port: 4004

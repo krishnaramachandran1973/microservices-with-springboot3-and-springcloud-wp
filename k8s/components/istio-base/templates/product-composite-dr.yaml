@@ -1,0 +1,9 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: product-composite-dr
+spec:
+  host: product-composite
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL

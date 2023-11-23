@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
@@ -57,20 +58,34 @@ public class ProductCompositeController {
             @ApiResponse(responseCode = "422", description = "${api.responseCodes.unprocessableEntity.description}")
     })
     @GetMapping("/{productId}")
-    Mono<ProductAggregate> getProduct(@PathVariable Long productId, @RequestParam(value = "delay", required = false, defaultValue = "0") int delay,
+    Mono<ProductAggregate> getProduct(@RequestHeader HttpHeaders requestHeaders, @PathVariable Long productId,
+                                      @RequestParam(value = "delay", required = false, defaultValue = "0") int delay,
                                       @RequestParam(value = "faultPercent", required = false, defaultValue = "0") int faultPercent) {
         log.info("Will get composite product info for product.id={}", productId);
-
+        HttpHeaders headers = getHeaders(requestHeaders, "X-group");
         return Mono.zip(
                         values -> createProductAggregate((ProductDto) values[0], (List<RecommendationDto>) values[1],
                                 (List<ReviewDto>) values[2], util.getServiceAddress()),
-                        integration.getProduct(productId, delay, faultPercent),
-                        integration.getRecommendations(productId)
+                        integration.getProduct(headers, productId, delay, faultPercent),
+                        integration.getRecommendations(headers, productId)
                                 .collectList(),
-                        integration.getReviews(productId)
+                        integration.getReviews(headers, productId)
                                 .collectList())
                 .doOnError(ex -> log.warn("getCompositeProduct failed: {}", ex.toString()))
                 .log(log.getName(), FINE);
+    }
+
+    private HttpHeaders getHeaders(HttpHeaders requestHeaders, String... headers) {
+        log.trace("Will look for {} headers: {}", headers.length, headers);
+        HttpHeaders h = new HttpHeaders();
+        for (String header : headers) {
+            List<String> value = requestHeaders.get(header);
+            if (value != null) {
+                h.addAll(header, value);
+            }
+        }
+        log.trace("Will transfer {}, headers: {}", h.size(), h);
+        return h;
     }
 
     private ProductAggregate createProductAggregate(ProductDto product, List<RecommendationDto> recommendations,
@@ -204,7 +219,7 @@ public class ProductCompositeController {
     }
 
     private Mono<SecurityContext> getLogAuthorizationInfoMono() {
-        return getSecurityContextMono().doOnNext(sc -> logAuthorizationInfo(sc));
+        return getSecurityContextMono().doOnNext(this::logAuthorizationInfo);
     }
 
     private Mono<SecurityContext> getSecurityContextMono() {

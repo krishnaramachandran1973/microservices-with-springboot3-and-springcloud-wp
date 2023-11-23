@@ -36,13 +36,13 @@ spec:
           livenessProbe:
             httpGet:
               path: {{.Values.deployment.container.livenessProbe_url}}
-              port: {{.Values.deployment.container.port}}
+              port: {{.Values.deployment.container.readiness_liveness_port}}
             initialDelaySeconds: 25
             periodSeconds: 15  
           readinessProbe:
             httpGet:
               path: {{.Values.deployment.container.readinessProbe_url}}
-              port: {{.Values.deployment.container.port}}
+              port: {{.Values.deployment.container.readiness_liveness_port}}
             initialDelaySeconds: 25
             periodSeconds: 15    
           resources:

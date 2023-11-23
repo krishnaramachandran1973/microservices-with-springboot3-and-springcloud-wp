@@ -1,0 +1,9 @@
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: auth-server-dr
+spec:
+  host: auth-server
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL

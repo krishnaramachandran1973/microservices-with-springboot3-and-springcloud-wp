@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
@@ -59,7 +60,7 @@ public class ProductCompositeIntegration {
     @Retry(name = "product")
     @TimeLimiter(name = "product")
     @CircuitBreaker(name = "product", fallbackMethod = "getProductFallbackValue")
-    public Mono<ProductDto> getProduct(Long productId, int delay, int faultPercent) {
+    public Mono<ProductDto> getProduct(HttpHeaders headers, Long productId, int delay, int faultPercent) {
         URI url = UriComponentsBuilder
                 .fromUriString(productServiceUrl + "/product/{productId}?delay={delay}&faultPercent={faultPercent}")
                 .build(productId, delay, faultPercent);
@@ -67,6 +68,7 @@ public class ProductCompositeIntegration {
 
         return webClient.get()
                 .uri(url)
+                .headers(httpHeaders -> httpHeaders.addAll(headers))
                 .retrieve()
                 .onStatus(HttpStatus.NOT_FOUND::equals, error -> Mono.error(new NotFoundException("Product not found for id " + productId)))
                 .onStatus(HttpStatus.UNPROCESSABLE_ENTITY::equals, error -> Mono.error(new InvalidInputException(
@@ -94,23 +96,25 @@ public class ProductCompositeIntegration {
                 .build());
     }
 
-    public Flux<RecommendationDto> getRecommendations(Long productId) {
+    public Flux<RecommendationDto> getRecommendations(HttpHeaders headers, Long productId) {
         String url = recommendationServiceUrl + "/recommendation?productId=" + productId;
         log.debug("Will call getRecommendations API on URL: {}", url);
 
         return this.webClient.get()
                 .uri(url)
+                .headers(httpHeaders -> httpHeaders.addAll(headers))
                 .retrieve()
                 .bodyToFlux(RecommendationDto.class)
                 .onErrorResume(ex -> Flux.empty());
     }
 
-    public Flux<ReviewDto> getReviews(Long productId) {
+    public Flux<ReviewDto> getReviews(HttpHeaders headers, Long productId) {
         String url = reviewServiceUrl + "/review?productId=" + productId;
         log.debug("Will call getReviews API on URL: {}", url);
 
         return this.webClient.get()
                 .uri(url)
+                .headers(httpHeaders -> httpHeaders.addAll(headers))
                 .retrieve()
                 .bodyToFlux(ReviewDto.class)
                 .onErrorResume(ex -> Flux.empty());

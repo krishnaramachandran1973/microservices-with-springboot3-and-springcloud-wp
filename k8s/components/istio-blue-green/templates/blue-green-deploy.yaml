@@ -1,0 +1,81 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: product-vs
+spec:
+  hosts:
+    - product
+  http:
+    - match:
+        - headers:
+            X-group:
+              exact: test
+      route:
+        - destination:
+            host: product
+            subset: new
+    - route:
+        - destination:
+            host: product
+            subset: old
+          weight: 80
+        - destination:
+            host: product
+            subset: new
+          weight: 20
+
+---
+
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: recommendation-vs
+spec:
+  hosts:
+    - recommendation
+  http:
+    - match:
+        - headers:
+            X-group:
+              exact: test
+      route:
+        - destination:
+            host: recommendation
+            subset: new
+    - route:
+        - destination:
+            host: recommendation
+            subset: old
+          weight: 0
+        - destination:
+            host: recommendation
+            subset: new
+          weight: 100
+
+---
+
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: review-vs
+spec:
+  hosts:
+    - review
+  http:
+    - match:
+        - headers:
+            X-group:
+              exact: test
+      route:
+        - destination:
+            host: review
+            subset: new
+    - route:
+        - destination:
+            host: review
+            subset: old
+          weight: 0
+        - destination:
+            host: review
+            subset: new
+          weight: 100
